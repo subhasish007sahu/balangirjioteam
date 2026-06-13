@@ -121,59 +121,81 @@ Our Jio representative will contact you within 24 hours.
 </div>
 
 <script>
-const SCRIPT_URL="https://script.google.com/macros/s/AKfycby8TNvOxXIVk_RvWTlk5pCnCVEBvsFEns7oATj8Qf3Hpfuhy8dlbCxYLzJ5Udls2_T6AQ/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby8TNvOxXIVk_RvWTlk5pCnCVEBvsFEns7oATj8Qf3Hpfuhy8dlbCxYLzJ5Udls2_T6AQ/exec";
 
-const leadId="BLR-"+Date.now();
-document.getElementById("leadIdPreview").innerText=leadId;
+const leadId = "BLR-" + Date.now();
+document.getElementById("leadIdPreview").innerText = leadId;
 
 function toggleOperator(){
-document.getElementById("operatorDiv").classList.toggle(
-"hidden",
-document.getElementById("leadType").value!=="MNP"
-);
+  document.getElementById("operatorDiv").classList.toggle(
+    "hidden",
+    document.getElementById("leadType").value !== "MNP"
+  );
 }
 
 function getLocation(){
-navigator.geolocation.getCurrentPosition(function(pos){
-document.getElementById("latitude").value=pos.coords.latitude;
-document.getElementById("longitude").value=pos.coords.longitude;
-document.getElementById("mapsLink").value=
-"https://maps.google.com/?q="+pos.coords.latitude+","+pos.coords.longitude;
-alert("Location captured successfully.");
-},function(){
-alert("Unable to fetch location.");
-});
+  navigator.geolocation.getCurrentPosition(function(pos){
+    document.getElementById("latitude").value = pos.coords.latitude;
+    document.getElementById("longitude").value = pos.coords.longitude;
+    document.getElementById("mapsLink").value = "https://maps.google.com/?q=" + pos.coords.latitude + "," + pos.coords.longitude;
+    alert("Location captured successfully.");
+  }, function(){
+    alert("Unable to fetch location. Please check your device permissions.");
+  });
 }
 
-document.getElementById("leadForm").addEventListener("submit",async function(e){
-e.preventDefault();
+document.getElementById("leadForm").addEventListener("submit", async function(e){
+  e.preventDefault();
 
-const data=Object.fromEntries(new FormData(this).entries());
+  const submitButton = this.querySelector('button[type="submit"]');
+  const data = Object.fromEntries(new FormData(this).entries());
 
-if(!/^[6-9]\d{9}$/.test(data.mobile)){
-alert("Enter a valid 10-digit mobile number.");
-return;
-}
+  // Strict validation for Primary Mobile Number
+  if(!/^[6-9]\d{9}$/.test(data.mobile)){
+    alert("Enter a valid 10-digit primary mobile number.");
+    return;
+  }
 
-if(data.leadType==="Jio AirFiber" && !data.latitude){
-alert("GPS location is mandatory for AirFiber leads.");
-return;
-}
+  // Strict validation for Alternate Mobile Number (if entered)
+  if(data.altMobile && !/^[6-9]\d{9}$/.test(data.altMobile)){
+    alert("Enter a valid 10-digit alternate mobile number.");
+    return;
+  }
 
-data.leadId=leadId;
+  // Location check for AirFiber
+  if(data.leadType === "Jio AirFiber" && !data.latitude){
+    alert("GPS location is mandatory for AirFiber leads.");
+    return;
+  }
 
-try{
-await fetch(SCRIPT_URL,{
-method:"POST",
-body:JSON.stringify(data)
-});
+  data.leadId = leadId;
+  
+  // Disable button to prevent double clicks
+  submitButton.innerText = "Submitting...";
+  submitButton.disabled = true;
 
-document.getElementById("successMsg").style.display="block";
-this.reset();
-window.scrollTo({top:0,behavior:"smooth"});
-}catch(err){
-alert("Submission failed. Please try again.");
-}
+  try {
+    // Corrected fetch request to bypass CORS issues
+    let response = await fetch(SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify(data),
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8"
+      }
+    });
+
+    document.getElementById("successMsg").style.display = "block";
+    this.reset();
+    document.getElementById("operatorDiv").classList.add("hidden"); // Reset operator div
+    window.scrollTo({top: 0, behavior: "smooth"});
+    
+  } catch (err) {
+    alert("Submission failed. Please check your internet connection and try again.");
+  } finally {
+    // Re-enable button after process is complete
+    submitButton.innerText = "Submit Lead";
+    submitButton.disabled = false;
+  }
 });
 </script>
 </body>
