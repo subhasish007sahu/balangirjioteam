@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jio Balangir Lead Registration Form</title>
+<style>
+body{font-family:Arial,sans-serif;background:#eef4ff;margin:0}
+.header{background:#0f3cc9;color:white;padding:20px;text-align:center}
+.logo{font-size:34px;font-weight:bold;background:white;color:#0f3cc9;display:inline-block;padding:8px 16px;border-radius:50px}
+.container{max-width:850px;margin:20px auto;background:white;padding:25px;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.15)}
+label{font-weight:bold}
+input,select,textarea,button{width:100%;padding:12px;margin-top:6px;margin-bottom:14px;border:1px solid #ccc;border-radius:8px;box-sizing:border-box}
+button{background:#0f3cc9;color:white;border:none;font-weight:bold;cursor:pointer}
+button:hover{opacity:.95}
+.hidden{display:none}
+.success{display:none;color:green;font-weight:bold;text-align:center;padding:10px}
+.note{background:#f4f8ff;padding:10px;border-radius:8px;margin-bottom:15px}
+</style>
+</head>
+<body>
+<div class="header">
+<div class="logo">Jio</div>
+<h2>Jio Balangir Lead Registration Form</h2>
+<h3>🏠 Service At Your Doorstep</h3>
+<p>We will reach you in 24 Hrs.</p>
+</div>
+
+<div class="container">
+<div class="note">
+<b>Lead ID</b>: <span id="leadIdPreview"></span>
+</div>
+
+<form id="leadForm">
+
+<label>Customer Name *</label>
+<input type="text" name="customerName" required>
+
+<label>Mobile Number *</label>
+<input type="tel" name="mobile" pattern="[6-9]{1}[0-9]{9}" maxlength="10" minlength="10" required>
+
+<label>Alternate Mobile Number</label>
+<input type="tel" name="altMobile" pattern="[6-9]{1}[0-9]{9}" maxlength="10" minlength="10">
+
+<label>Address *</label>
+<input type="text" name="address" required>
+
+<label>Town Name *</label>
+<input type="text" name="town" required>
+
+<label>Landmark</label>
+<input type="text" name="landmark">
+
+<label>District *</label>
+<input type="text" name="district" required>
+
+<label>Pin Code *</label>
+<input type="text" name="pincode" pattern="[0-9]{6}" maxlength="6" minlength="6" required>
+
+<label>GPS Location</label>
+<button type="button" onclick="getLocation()">📍 Share My Location</button>
+<input type="hidden" id="latitude" name="latitude">
+<input type="hidden" id="longitude" name="longitude">
+<input type="hidden" id="mapsLink" name="mapsLink">
+
+<label>Near By Jio Store *</label>
+<select name="store" required>
+<option value="">Select Store</option>
+<option>Balangir Town</option>
+<option>Tushura</option>
+<option>Belpara</option>
+<option>Sindhekela</option>
+<option>Khariar</option>
+<option>Bangomunda</option>
+<option>Kantabanji</option>
+<option>Saintala</option>
+<option>Titlagarh</option>
+<option>Loisinga</option>
+<option>Khariar Road</option>
+<option>Rajpurnuapada</option>
+<option>Patnagarh</option>
+<option>Komana</option>
+<option>Sinapali</option>
+<option>Lathor</option>
+<option>Puintala</option>
+</select>
+
+<label>Lead Type *</label>
+<select id="leadType" name="leadType" required onchange="toggleOperator()">
+<option value="">Select Lead Type</option>
+<option>MNP</option>
+<option>New Jio SIM</option>
+<option>Jio AirFiber</option>
+<option>Jio Bharat</option>
+<option>Jio Bharat Handset + SIM</option>
+</select>
+
+<div id="operatorDiv" class="hidden">
+<label>Current Operator</label>
+<select name="operator">
+<option value="">Select Operator</option>
+<option>Airtel</option>
+<option>Vi</option>
+<option>BSNL</option>
+<option>Others</option>
+</select>
+</div>
+
+<label>Remarks</label>
+<textarea name="remarks"></textarea>
+
+<button type="submit">Submit Lead</button>
+</form>
+
+<div class="success" id="successMsg">
+✅ Thank you for your interest in Jio.<br>
+Your lead has been submitted successfully.<br>
+Our Jio representative will contact you within 24 hours.
+</div>
+
+</div>
+
+<script>
+const SCRIPT_URL="PASTE_YOUR_APPS_SCRIPT_WEBAPP_URL_HERE";
+
+const leadId="BLR-"+Date.now();
+document.getElementById("leadIdPreview").innerText=leadId;
+
+function toggleOperator(){
+document.getElementById("operatorDiv").classList.toggle(
+"hidden",
+document.getElementById("leadType").value!=="MNP"
+);
+}
+
+function getLocation(){
+navigator.geolocation.getCurrentPosition(function(pos){
+document.getElementById("latitude").value=pos.coords.latitude;
+document.getElementById("longitude").value=pos.coords.longitude;
+document.getElementById("mapsLink").value=
+"https://maps.google.com/?q="+pos.coords.latitude+","+pos.coords.longitude;
+alert("Location captured successfully.");
+},function(){
+alert("Unable to fetch location.");
+});
+}
+
+document.getElementById("leadForm").addEventListener("submit",async function(e){
+e.preventDefault();
+
+const data=Object.fromEntries(new FormData(this).entries());
+
+if(!/^[6-9]\d{9}$/.test(data.mobile)){
+alert("Enter a valid 10-digit mobile number.");
+return;
+}
+
+if(data.leadType==="Jio AirFiber" && !data.latitude){
+alert("GPS location is mandatory for AirFiber leads.");
+return;
+}
+
+data.leadId=leadId;
+
+try{
+await fetch(SCRIPT_URL,{
+method:"POST",
+body:JSON.stringify(data)
+});
+
+document.getElementById("successMsg").style.display="block";
+this.reset();
+window.scrollTo({top:0,behavior:"smooth"});
+}catch(err){
+alert("Submission failed. Please try again.");
+}
+});
+</script>
+</body>
+</html>
